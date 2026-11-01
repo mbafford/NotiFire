@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Status-bar icon: flame silhouette with the bell cut out, cropped to its bounds. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="80"
+    android:viewportHeight="80">
+    <group android:translateX="-15" android:translateY="-10.5">
+        <path android:fillColor="#FFFFFF" android:fillType="evenOdd" android:pathData="M54,89 C35,89 25,75 28,59 C30,49 37,45 36,33 C42,39 45,46 45,53 C47,43 44,33 50,21 C52,15 57,12 58,12 C55,22 63,29 66,39 C67,43 67,46 66,49 C70,45 73,40 72,33 C78,40 82,50 80,62 C77,78 68,89 54,89 Z M54,56 C48,56 44.5,60.5 44.5,66.5 V71 L41.5,74.8 V77 H66.5 V74.8 L63.5,71 V66.5 C63.5,60.5 60,56 54,56 Z M50.2,79 A3.8,3.8 0 0,0 57.8,79 Z M51.8,53.6 a2.2,2.2 0 1,0 4.4,0 a2.2,2.2 0 1,0 -4.4,0 Z" />
+    </group>
+</vector>

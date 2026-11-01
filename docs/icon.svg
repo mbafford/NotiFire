@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="128" height="128">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2B1636"/><stop offset="1" stop-color="#0F0812"/></linearGradient>
+    <linearGradient id="outer" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#D81B0B"/><stop offset="0.5" stop-color="#FF5A00"/><stop offset="1" stop-color="#FFA000"/></linearGradient>
+    <linearGradient id="inner" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#FF8F00"/><stop offset="0.55" stop-color="#FFCA28"/><stop offset="1" stop-color="#FFF8C4"/></linearGradient>
+  </defs>
+  <circle cx="54" cy="54" r="54" fill="url(#bg)"/>
+  <path fill="url(#outer)" d="M54,89 C35,89 25,75 28,59 C30,49 37,45 36,33 C42,39 45,46 45,53 C47,43 44,33 50,21 C52,15 57,12 58,12 C55,22 63,29 66,39 C67,43 67,46 66,49 C70,45 73,40 72,33 C78,40 82,50 80,62 C77,78 68,89 54,89 Z"/>
+  <path fill="url(#inner)" d="M54,86 C42,86 35,78 36,67 C37,60 41,57 42,50 C45,54 47,58 47,62 C48,52 52,46 53,36 C58,42 61,48 61,55 C63,52 65,50 65,46 C69,52 71,59 70,67 C69,78 63,86 54,86 Z"/>
+  <path fill="#1A0D20" d="M54,56 C48,56 44.5,60.5 44.5,66.5 V71 L41.5,74.8 V77 H66.5 V74.8 L63.5,71 V66.5 C63.5,60.5 60,56 54,56 Z"/>
+  <path fill="#1A0D20" d="M50.2,79 A3.8,3.8 0 0,0 57.8,79 Z"/>
+  <circle cx="54" cy="53.6" r="2.2" fill="#1A0D20"/>
+</svg>

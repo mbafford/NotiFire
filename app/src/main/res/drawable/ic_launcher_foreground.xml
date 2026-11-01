@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- NotiFire: a bell carved out of a flame. Scaled to stay inside the launcher mask. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group android:pivotX="54" android:pivotY="54" android:scaleX="0.8" android:scaleY="0.8">
+        <path android:pathData="M54,89 C35,89 25,75 28,59 C30,49 37,45 36,33 C42,39 45,46 45,53 C47,43 44,33 50,21 C52,15 57,12 58,12 C55,22 63,29 66,39 C67,43 67,46 66,49 C70,45 73,40 72,33 C78,40 82,50 80,62 C77,78 68,89 54,89 Z">
+            <aapt:attr name="android:fillColor">
+                <gradient android:type="linear" android:startX="54" android:startY="89" android:endX="54" android:endY="12">
+                    <item android:offset="0" android:color="#D81B0B" />
+                    <item android:offset="0.5" android:color="#FF5A00" />
+                    <item android:offset="1" android:color="#FFA000" />
+                </gradient>
+            </aapt:attr>
+        </path>
+        <path android:pathData="M54,86 C42,86 35,78 36,67 C37,60 41,57 42,50 C45,54 47,58 47,62 C48,52 52,46 53,36 C58,42 61,48 61,55 C63,52 65,50 65,46 C69,52 71,59 70,67 C69,78 63,86 54,86 Z">
+            <aapt:attr name="android:fillColor">
+                <gradient android:type="linear" android:startX="54" android:startY="86" android:endX="54" android:endY="36">
+                    <item android:offset="0" android:color="#FF8F00" />
+                    <item android:offset="0.55" android:color="#FFCA28" />
+                    <item android:offset="1" android:color="#FFF8C4" />
+                </gradient>
+            </aapt:attr>
+        </path>
+        <path android:fillColor="#1A0D20" android:pathData="M54,56 C48,56 44.5,60.5 44.5,66.5 V71 L41.5,74.8 V77 H66.5 V74.8 L63.5,71 V66.5 C63.5,60.5 60,56 54,56 Z" />
+        <path android:fillColor="#1A0D20" android:pathData="M50.2,79 A3.8,3.8 0 0,0 57.8,79 Z" />
+        <path android:fillColor="#1A0D20" android:pathData="M51.8,53.6 a2.2,2.2 0 1,0 4.4,0 a2.2,2.2 0 1,0 -4.4,0 Z" />
+    </group>
+</vector>
