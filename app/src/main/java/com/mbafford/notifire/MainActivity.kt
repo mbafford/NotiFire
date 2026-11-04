@@ -27,12 +27,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
@@ -197,7 +199,7 @@ private fun Home(
             ListItem(
                 leadingContent = { AppIcon(r.pkg) },
                 headlineContent = { Text(r.appLabel) },
-                supportingContent = { Text(r.summary(), maxLines = 2, overflow = TextOverflow.Ellipsis) },
+                supportingContent = { Text(r.summary(), maxLines = 3, overflow = TextOverflow.Ellipsis) },
                 trailingContent = { Switch(r.enabled, onCheckedChange = { onToggle(r, it) }) },
                 modifier = Modifier.clickable { onEdit(r) },
             )
@@ -286,6 +288,8 @@ private fun RuleEditor(
     var autoPress by remember { mutableStateOf(rule.autoPress) }
     var soundUri by remember { mutableStateOf(rule.soundUri) }
     var volumePct by remember { mutableIntStateOf(rule.volumePct) }
+    var escalate by remember { mutableStateOf(rule.escalateSec.toString()) }
+    var vibration by remember { mutableStateOf(rule.vibration) }
     val pickSound = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
         if (res.resultCode != Activity.RESULT_OK) return@rememberLauncherForActivityResult
         val picked = res.data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI, Uri::class.java)
@@ -304,6 +308,8 @@ private fun RuleEditor(
         autoPress = autoPress.trim(),
         soundUri = soundUri,
         volumePct = volumePct,
+        escalateSec = escalate.toIntOrNull()?.coerceIn(0, 300) ?: 5,
+        vibration = vibration,
         enabled = true, // preview and test ignore the on/off switch
     )
 
@@ -359,6 +365,20 @@ private fun RuleEditor(
                 }) { Text("Choose") }
             },
         )
+        Text("Vibration", modifier = Modifier.padding(top = 8.dp))
+        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Vibration.entries.forEach { v ->
+                FilterChip(selected = vibration == v, onClick = { vibration = v }, label = { Text(v.label) })
+            }
+        }
+        OutlinedTextField(
+            escalate, { escalate = it.filter(Char::isDigit) },
+            label = { Text("Vibrate only for (seconds) before sound") },
+            supportingText = { Text("Vibrates first; plays the sound if nothing is pressed by then. 0 = sound right away.") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.fillMaxWidth(),
+        )
         Text("Volume: $volumePct% of alarm max", modifier = Modifier.padding(top = 8.dp))
         Slider(
             value = volumePct.toFloat(),
@@ -387,11 +407,19 @@ private fun RuleEditor(
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = { onSave(draft.copy(enabled = enabled)) }) { Text("Save") }
-            OutlinedButton(onClick = {
-                Alerter.start(ctx, draft.copy(durationSec = 10), "test-${rule.id}", "Test alert", silent = true)
-            }) { Text("Silent test") }
             if (!isNew) TextButton(onClick = onDelete) { Text("Delete") }
             TextButton(onClick = onCancel) { Text("Cancel") }
+        }
+        // Tests use the unsaved settings and stay up long enough to reach the escalation.
+        val testRule = draft.copy(durationSec = maxOf(10, draft.escalateSec + draft.soundSec + 5))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 4.dp)) {
+            // Real vibration and sound (unless silent test mode is on).
+            OutlinedButton(onClick = {
+                Alerter.start(ctx, testRule, "test-${rule.id}", "Test alert")
+            }) { Text("Test") }
+            OutlinedButton(onClick = {
+                Alerter.start(ctx, testRule, "test-${rule.id}", "Test alert", silent = true)
+            }) { Text("Silent test") }
         }
 
         SectionHeader("Recent from this app")
@@ -490,7 +518,9 @@ private fun Rule.summary(): String = listOfNotNull(
     channelId.ifBlank { null }?.let { "channel $it" },
     pattern.ifBlank { null }?.let { "matches \"$it\"" },
     autoPress.ifBlank { null }?.let { "auto-press \"$it\"" },
-    "volume $volumePct%, on screen ${durationSec}s",
+    (if (vibration == Vibration.OFF) "no buzz" else "${vibration.label.lowercase()} buzz") +
+        (if (escalateSec > 0) ", sound after ${escalateSec}s" else " + sound") + " at $volumePct%",
+    "on screen ${durationSec}s",
 ).joinToString(" · ").let { if (channelId.isBlank() && pattern.isBlank()) "any notification · $it" else it }
 
 private fun time(ms: Long): String = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(ms))

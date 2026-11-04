@@ -24,6 +24,10 @@ data class Rule(
     val soundUri: String = "",
     /** Alarm volume while the sound plays, as a percent of max (restored afterwards). */
     val volumePct: Int = 30,
+    /** Vibrate first; if nothing is pressed within this many seconds, vibrate again and play the sound. 0 = sound right away. */
+    val escalateSec: Int = 5,
+    /** How hard to buzz, at the alert and again at escalation. */
+    val vibration: Vibration = Vibration.LONG,
 ) {
     /** The sound to play, or null for none. */
     fun sound(ctx: Context): Uri? = when (soundUri) {
@@ -52,7 +56,8 @@ data class Rule(
         .put("id", id).put("pkg", pkg).put("appLabel", appLabel).put("channelId", channelId)
         .put("pattern", pattern).put("durationSec", durationSec).put("soundSec", soundSec).put("enabled", enabled)
         .put("autoPress", autoPress).put("soundUri", soundUri)
-        .put("volumePct", volumePct)
+        .put("volumePct", volumePct).put("escalateSec", escalateSec)
+        .put("vibration", vibration.name.lowercase())
 
     companion object {
         fun fromJson(o: JSONObject) = Rule(
@@ -67,6 +72,8 @@ data class Rule(
             autoPress = o.optString("autoPress"),
             soundUri = o.optString("soundUri"),
             volumePct = o.optInt("volumePct", 30),
+            escalateSec = o.optInt("escalateSec", 5),
+            vibration = Vibration.parse(o.optString("vibration")),
         )
 
         const val NO_SOUND = "none"
@@ -87,6 +94,21 @@ data class Rule(
 
         /** Auto-press must never approve anything on its own; that would defeat 2FA prompts. */
         private val APPROVAL = Regex("approve|allow|accept|confirm|grant|\\byes\\b|verify", RegexOption.IGNORE_CASE)
+    }
+}
+
+/**
+ * Vibration patterns: alternating off/on milliseconds, and the index to repeat from (-1 = play once).
+ * A repeating pattern keeps going until a press, the end of the sound, or the alert closes.
+ */
+enum class Vibration(val label: String, val timings: LongArray, val repeat: Int) {
+    OFF("Off", longArrayOf(), -1),
+    SHORT("Short", longArrayOf(0, 300, 150, 300), -1),
+    LONG("Long", longArrayOf(0, 600, 250, 600, 250, 600), -1),
+    CONTINUOUS("Continuous", longArrayOf(0, 500, 400), 1);
+
+    companion object {
+        fun parse(s: String) = entries.firstOrNull { it.name.equals(s, ignoreCase = true) } ?: LONG
     }
 }
 

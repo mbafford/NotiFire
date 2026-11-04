@@ -63,6 +63,7 @@ object Alerter {
     private val alertedAt = mutableMapOf<String, Long>()
     private val timeout = Runnable { appCtx?.let(::stop) }
     private val soundDone = Runnable { appCtx?.let(::stopSound) }
+    private val escalate = Runnable { escalateNow() }
     private val autoPressedAt = mutableMapOf<String, Long>()
     private val pendingAlerts = mutableMapOf<String, Runnable>()
 
@@ -137,8 +138,47 @@ object Alerter {
         stop(app)
         appCtx = app
         active = Active(rule, key, title, text, silent, contentIntent, actions)
-        Log.i("NotiFire", "alert rule=${rule.id} pkg=${rule.pkg} silent=$silent")
+        Log.i("NotiFire", "alert rule=${rule.id} pkg=${rule.pkg} silent=$silent escalateSec=${rule.escalateSec}")
 
+        // Vibrate first. If nothing is pressed within escalateSec, vibrate again and play the sound.
+        // Any press on the alert (button, open, stop) goes through stopSound, which cancels this.
+        vibrate(app, rule, silent)
+        if (rule.escalateSec <= 0) playSound(app, rule, silent)
+        else handler.postDelayed(escalate, rule.escalateSec * 1000L)
+
+        // A full-screen notification only takes over the screen when the phone is locked or idle.
+        // With "display over other apps" we're allowed to open the alert directly, even mid-use,
+        // and the notification is just a quiet status entry with a Stop button.
+        val direct = Settings.canDrawOverlays(app)
+        showNotification(app, rule, title, silent, direct)
+        if (direct) {
+            runCatching {
+                app.startActivity(Intent(app, AlertActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }.onFailure { Log.w("NotiFire", "direct alert launch failed", it) }
+        }
+        handler.postDelayed(timeout, rule.durationSec * 1000L)
+    }
+
+    @Synchronized
+    private fun escalateNow() {
+        val a = active ?: return
+        val app = appCtx ?: return
+        Log.i("NotiFire", "no press after ${a.rule.escalateSec}s, escalating to sound silent=${a.silent}")
+        vibrate(app, a.rule, a.silent)
+        playSound(app, a.rule, a.silent)
+    }
+
+    /** Plays the rule's vibration pattern (see [Vibration]); a new call replaces the current one. */
+    private fun vibrate(app: Context, rule: Rule, silent: Boolean) {
+        val v = rule.vibration
+        if (silent || v == Vibration.OFF) return
+        app.getSystemService(VibratorManager::class.java).defaultVibrator.vibrate(
+            VibrationEffect.createWaveform(v.timings, v.repeat),
+            VibrationAttributes.createForUsage(VibrationAttributes.USAGE_ALARM),
+        )
+    }
+
+    private fun playSound(app: Context, rule: Rule, silent: Boolean) {
         val uri = rule.sound(app)
         if (!silent && uri != null) {
             val audio = app.getSystemService(AudioManager::class.java)
@@ -162,23 +202,7 @@ object Alerter {
             if (silent) volume = 0f
             play()
         }
-        if (!silent) app.getSystemService(VibratorManager::class.java).defaultVibrator.vibrate(
-            VibrationEffect.createWaveform(longArrayOf(0, 300, 150, 300), -1),
-            VibrationAttributes.createForUsage(VibrationAttributes.USAGE_ALARM),
-        )
-
-        // A full-screen notification only takes over the screen when the phone is locked or idle.
-        // With "display over other apps" we're allowed to open the alert directly, even mid-use,
-        // and the notification is just a quiet status entry with a Stop button.
-        val direct = Settings.canDrawOverlays(app)
-        showNotification(app, rule, title, silent, direct)
-        if (direct) {
-            runCatching {
-                app.startActivity(Intent(app, AlertActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            }.onFailure { Log.w("NotiFire", "direct alert launch failed", it) }
-        }
         handler.postDelayed(soundDone, rule.soundSec * 1000L)
-        handler.postDelayed(timeout, rule.durationSec * 1000L)
     }
 
     @Synchronized
@@ -187,9 +211,10 @@ object Alerter {
         if (key == active?.key) stop(ctx.applicationContext)
     }
 
-    /** Ends the sound and vibration but leaves the alert on screen. */
+    /** Ends the sound and vibration (and any pending escalation) but leaves the alert on screen. */
     @Synchronized
     fun stopSound(ctx: Context) {
+        handler.removeCallbacks(escalate)
         handler.removeCallbacks(soundDone)
         ringtone?.stop()
         ringtone = null

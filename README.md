@@ -13,7 +13,7 @@ I built it because two-factor push approvals arrive while my phone is on silent,
 
 <p>
   <img src="docs/screenshots/home.png" width="240" alt="Main screen listing two rules and recent notifications">
-  <img src="docs/screenshots/rule-editor.png" width="240" alt="Rule editor with channel, text filter, sound, volume and auto-press settings">
+  <img src="docs/screenshots/rule-editor.png" width="240" alt="Rule editor with vibration choices, delay before sound, volume, auto-press, and Test / Silent test buttons">
   <img src="docs/screenshots/app-picker.png" width="240" alt="Searchable app picker">
 </p>
 
@@ -22,11 +22,12 @@ I built it because two-factor push approvals arrive while my phone is on silent,
 ## What it does
 
 - **Rules per app.** Pick an app from a searchable list, or tap a recent notification to start a rule from it. You can narrow a rule to one notification channel and/or a regex on the title and text. The editor marks recent notifications from that app with ✓ or ✗ for whether the rule would match them.
-- **Gets through silent mode.** The sound plays on the alarm channel at a volume you set per rule (percent of alarm max). It plays once, with a short double buzz, and your alarm volume goes back to what it was afterwards. You can pick any system sound or one you've added (see [Custom sounds](#custom-sounds)).
+- **Gets through silent mode.** The sound plays on the alarm channel at a volume you set per rule (percent of alarm max). Alerts escalate: first a buzz (per rule: off, short, long or continuous), then, if you haven't pressed anything on the alert within a few seconds (5 by default, set per rule), another buzz plus the sound. The sound plays once, and your alarm volume goes back to what it was afterwards. You can pick any system sound or one you've added (see [Custom sounds](#custom-sounds)).
 - **Full-screen alert.** It wakes the screen and appears over the lock screen, or over the app you're using. It shows the notification's title, text and **buttons**, plus *Open* (does what tapping the notification does) and *Stop*.
 - **Every button asks for an unlock first.** Fingerprint, face or PIN is required before NotiFire presses anything, so nobody holding your locked phone can approve a login.
 - **Auto-press** for two-step notifications. Some two-factor apps' first push only has a "Tap To View Actions" button. A rule can press that button automatically, stay quiet, and alert on the updated notification that has *Approve* and *Deny*. Auto-press never presses buttons labeled approve, allow, accept, confirm, grant, yes or verify.
 - **The alert follows the notification.** If the source notification is updated, the alert shows the new version; if it's dismissed (say you approved on your watch), the alert closes.
+- **Test buttons** in the rule editor: *Test* runs a real alert (vibration and sound) with the unsaved settings; *Silent test* runs it at zero volume with no vibration.
 - **Silent test mode** for 10 minutes: alerts still run all the way through, at zero volume with no vibration. It turns itself off.
 - **Only looks at apps you have rules for.** Notifications from other apps are dropped immediately, without being read or stored. To set up a rule for a new app, turn on **capture mode**: for 10 minutes NotiFire records notifications from every app so you can tap one to start a rule. When capture ends, entries from apps without a rule are deleted.
 
@@ -110,13 +111,15 @@ adb shell "run-as com.mbafford.notifire sh -c 'cat > files/rules.json'" < rules.
     "soundUri": "",
     "volumePct": 30,
     "soundSec": 3,
+    "escalateSec": 5,
+    "vibration": "long",
     "durationSec": 60,
     "enabled": true
   }
 ]
 ```
 
-`soundUri`: blank means the default alarm, `"none"` means no sound, anything else is a `content://` URI from the picker. `soundSec` only cuts off long sounds; every sound plays once.
+`soundUri`: blank means the default alarm, `"none"` means no sound, anything else is a `content://` URI from the picker. `soundSec` only cuts off long sounds; every sound plays once. `escalateSec` is how long the alert only vibrates before the sound plays (0 = sound right away). `vibration` is `off`, `short`, `long` (default) or `continuous` (keeps buzzing until you press something or the sound ends).
 
 ## Demo app: Uno
 
